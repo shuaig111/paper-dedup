@@ -1,0 +1,20 @@
+[build]
+  publish = "."
+
+# 把 AI 代理转发到云函数（AI 改写模式需要）
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/api-chat"
+  status = 200
+
+[[redirects]]
+  from = "/api/chat-anthropic"
+  to = "/.netlify/functions/api-chat"
+  status = 200
+
+[[redirects]]
+  from = "/api/chat-gemini"
+  to = "/.netlify/functions/api-chat"
+  status = 200
+
+# 单页应用不需要 SPA 回退，404 正常返回即可

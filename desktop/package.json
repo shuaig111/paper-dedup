@@ -1,0 +1,44 @@
+{
+  "name": "paper-dedup-desktop",
+  "productName": "论文降重助手",
+  "version": "1.0.0",
+  "description": "论文降重助手桌面端：论文降重（学术改写）、本地查重估算、数学建模论文支持、权威知识库",
+  "main": "main.js",
+  "author": "paper-dedup",
+  "license": "MIT",
+  "scripts": {
+    "prepare": "node gen-icon.js && node copy-web.js",
+    "start": "electron .",
+    "dist": "npm run prepare && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^43.4.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.paperdedup.desktop",
+    "productName": "论文降重助手",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "web/**/*"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "论文降重助手-便携版-${version}.exe"
+    },
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# Node
+node_modules/
+desktop/node_modules/
+
+# 构建产物
+desktop/dist/
+desktop/web/
+desktop/build/icon.png
+
+# 测试与临时文件
+.tmp/
+*.log
+
+# 系统文件
+Thumbs.db
+.DS_Store

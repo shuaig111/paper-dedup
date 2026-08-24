@@ -1,0 +1,17 @@
+{
+  "name": "paper-dedup",
+  "version": "1.0.0",
+  "description": "本地离线运行的论文降重（学术改写）工具，支持**毕业论文（毕设）、数学建模论文、通用学术文本**三类写作场景，内置**权威学术资源知识库**。",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "word-extractor": "^1.0.4"
+  }
+}

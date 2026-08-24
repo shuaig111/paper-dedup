@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>论文降重助手 · Paper Paraphrase Studio</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="logo">✍</span>
+      <div>
+        <h1>论文降重助手</h1>
+        <p class="subtitle">Paper Paraphrase Studio · 支持毕业论文 / 数学建模论文 / 通用学术文本</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-offline">离线规则引擎</span>
+      <span class="badge badge-ai">可选 AI 改写 (DeepSeek)</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="workbench">降重工作台</button>
+  <button class="tab-btn" data-tab="online">在线工具</button>
+  <button class="tab-btn" data-tab="knowledge">知识库</button>
+  <button class="tab-btn" data-tab="usage">使用说明</button>
+</nav>
+
+<main>
+  <!-- ======================= 降重工作台 ======================= -->
+  <section id="tab-workbench" class="tab-panel active">
+
+    <div class="toolbar card">
+      <label>论文类型
+        <select id="opt-mode">
+          <option value="general">通用论文（毕设/课程论文）</option>
+          <option value="math">数学建模论文</option>
+        </select>
+      </label>
+      <label>降重强度
+        <select id="opt-strength">
+          <option value="conservative">保守（仅同义词）</option>
+          <option value="standard" selected>标准（同义词+句式）</option>
+          <option value="strong">强力（+长句拆分+套话改写）</option>
+          <option value="ultra">极强（冲刺低重复率）</option>
+        </select>
+      </label>
+      <label class="check-row" title="自动逐级加强并估算，直到改写后与原文的估算重复率低于目标值"><input type="checkbox" id="opt-target-enable" checked> 🎯 自动达标</label>
+      <label title="改写后与原文的估算重复率目标（%）。勾选“自动达标”后自动迭代至该值以下">目标 ≤ <input type="number" id="opt-target" value="25" min="5" max="60" step="1" class="seed-input">%</label>
+      <label class="check-row"><input type="checkbox" id="opt-synonym" checked> 同义词替换</label>
+      <label class="check-row"><input type="checkbox" id="opt-conjunction" checked> 关联词/句式变换</label>
+      <label class="check-row"><input type="checkbox" id="opt-split" checked> 长句拆分</label>
+      <label class="check-row"><input type="checkbox" id="opt-expand"> 适度扩写</label>
+      <label title="留空则每次随机">随机种子 <input type="text" id="opt-seed" class="seed-input" placeholder="随机"></label>
+    </div>
+
+    <div class="ai-bar card">
+      <div class="ai-bar-head">
+        <strong>🤖 AI 改写模式（可选，效果更好）</strong>
+        <span class="ai-hint">支持 DeepSeek / OpenAI GPT / Claude / Gemini / 自定义兼容端点。Key 仅保存在本机浏览器，不会上传。</span>
+        <button id="btn-ai-toggle" class="btn btn-small">展开设置</button>
+      </div>
+      <div id="ai-panel" class="ai-panel hidden">
+        <label>AI 服务商
+          <select id="ai-provider"></select>
+        </label>
+        <label>模型
+          <select id="ai-model"></select>
+        </label>
+        <input type="text" id="ai-model-custom" class="hidden" placeholder="输入模型名称，如 gpt-4o-mini">
+        <label id="ai-key-label">API Key
+          <input type="password" id="ai-key" placeholder="sk-..." autocomplete="off">
+        </label>
+        <label id="ai-base-wrap" class="hidden">API 接口地址（Base URL）
+          <input type="text" id="ai-base" placeholder="https://api.deepseek.com">
+        </label>
+        <button id="btn-ai-run" class="btn btn-primary btn-small">用 AI 改写全文</button>
+        <button id="btn-ai-refine" class="btn btn-small" title="先用免费离线引擎全量降重，仅把仍与原文高度相似的句子交给 AI，费用通常节省 70~90%">💡 AI 精修（最省钱）</button>
+        <label class="ai-thresh" title="相似度达到该阈值的句子才会交给 AI 精修">精修阈值
+          <select id="ai-refine-thresh">
+            <option value="0.45">严格 45%（改得多）</option>
+            <option value="0.55" selected>标准 55%（推荐）</option>
+            <option value="0.65">宽松 65%（最省钱）</option>
+          </select>
+        </label>
+        <span id="ai-status" class="ai-status"></span>
+        <p class="ai-note">💰 <b>省钱原理</b>：先由免费离线引擎处理全文 → 本地估算找出仍相似的句子 → AI 只精修这些难点（通常仅全文 10~30%），效果不降、费用大降。模型列表已标注价格档位（🟢经济 / 🟡标准 / 🔴高配），默认选经济型。⚠ 无 Key 也能用：离线规则引擎已内置全部基础功能。OpenAI/Claude 受跨域限制需用 <code>start.bat</code> 启动本地服务（已内置代理）；Gemini 支持浏览器直连；自定义服务商可填 Kimi/智谱/通义/OpenRouter/硅基流动等任意 OpenAI 兼容接口。</p>
+      </div>
+    </div>
+
+    <div class="columns">
+      <div class="card editor-card">
+        <div class="card-head">
+          <h2>原文</h2>
+          <div class="card-actions">
+            <button id="btn-upload" class="btn btn-small">📄 上传论文</button>
+            <button id="btn-sample" class="btn btn-small">填充示例</button>
+            <button id="btn-clear" class="btn btn-small">清空</button>
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".docx,.doc,.pdf,.txt,.md,.rtf,.html,.htm" style="display:none">
+        <div id="doc-badge" class="doc-badge hidden"></div>
+        <textarea id="input-text" spellcheck="false" placeholder="在此粘贴论文段落，或点击“上传论文”直接上传整篇论文（支持 docx / pdf / doc / txt / md / rtf / html）&#10;&#10;上传后将按段落逐段降重，导出时保留原格式（docx→docx、pdf→pdf…）。&#10;提示：公式、参考文献标记 [1]、数字、专业术语会自动保护。"></textarea>
+        <div class="editor-foot"><span id="input-stat">0 字 · 0 句</span><span id="doc-hint" class="doc-hint"></span></div>
+        <div id="drop-hint" class="drop-hint hidden">松开以载入论文文件</div>
+      </div>
+
+      <div class="card editor-card">
+        <div class="card-head">
+          <h2>降重结果</h2>
+          <div class="card-actions">
+            <button id="btn-download" class="btn btn-small hidden">⬇ 下载结果（原格式）</button>
+            <button id="btn-highlight" class="btn btn-small">高亮改写处</button>
+            <button id="btn-copy" class="btn btn-small">复制</button>
+            <button id="btn-export-doc" class="btn btn-small">导出 Word</button>
+            <button id="btn-export-txt" class="btn btn-small">导出 TXT</button>
+          </div>
+        </div>
+        <textarea id="output-text" spellcheck="false" readonly placeholder="点击下方“开始降重”后，结果会显示在这里。"></textarea>
+        <div class="editor-foot"><span id="output-stat">0 字 · 0 句</span><span id="out-format" class="doc-hint"></span></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button id="btn-dedup" class="btn btn-primary btn-big">✨ 开始降重</button>
+      <button id="btn-check" class="btn btn-big">📊 本地查重估算</button>
+      <span class="action-tip">本地查重估算 ≠ 知网/万方/维普官方结果，仅用于改写的自我检查。</span>
+    </div>
+
+    <div id="progress-wrap" class="progress-wrap hidden">
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+      <span id="progress-text" class="progress-text"></span>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>统计与改写明细</h2><span class="card-sub" id="dedup-summary"></span></div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat"><span class="stat-num" id="st-orig-words">-</span><span class="stat-label">原文字数</span></div>
+        <div class="stat"><span class="stat-num" id="st-new-words">-</span><span class="stat-label">改写后字数</span></div>
+        <div class="stat"><span class="stat-num" id="st-changes">-</span><span class="stat-label">替换/变换次数</span></div>
+        <div class="stat"><span class="stat-num" id="st-est-after">-</span><span class="stat-label">改写后估算重复率</span></div>
+        <div class="stat"><span class="stat-num" id="st-self-dup">-</span><span class="stat-label">改写文内部重复段</span></div>
+      </div>
+      <div class="diff-wrap" id="diff-wrap">
+        <table class="diff-table" id="diff-table">
+          <thead><tr><th>#</th><th>原文片段</th><th>改写后</th><th>策略</th></tr></thead>
+          <tbody id="diff-body"></tbody>
+        </table>
+        <p class="empty-hint" id="diff-empty">暂无改写记录。输入文本后点击“开始降重”。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>本地查重估算报告</h2></div>
+      <div id="check-report" class="check-report">
+        <p class="empty-hint">点击“本地查重估算”生成报告：① 改写文与原文的相似度估算；② 全文内部重复段落自查。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>🛠 高级工具</h2><span class="card-sub">写作检查 · 逐句对照 · 朗读 · 查重报告 · 自定义保护词</span></div>
+      <div class="adv-row">
+        <button id="btn-compare" class="btn btn-small">📋 逐句对照</button>
+        <button id="btn-writing" class="btn btn-small">✍️ 学术写作检查</button>
+        <button id="btn-tts" class="btn btn-small">🔊 朗读结果</button>
+        <button id="btn-report" class="btn btn-small">📊 导出查重报告</button>
+        <span class="adv-tip">快捷键：Ctrl+Enter 降重 · Ctrl+Shift+C 复制 · Ctrl+Shift+E 导出</span>
+      </div>
+      <div class="adv-row">
+        <label class="adv-label" title="每行一个词，降重时这些词不会被改写（自动合并数学建模术语）">🛡️ 自定义保护词（每行一个）</label>
+        <textarea id="custom-terms" class="custom-terms" rows="2" placeholder="张教授&#10;某某市&#10;某某项目"></textarea>
+      </div>
+      <div id="adv-output" class="adv-output"></div>
+    </div>
+
+    <div class="warn-banner">
+      <strong>⚠ 合规提醒：</strong>本软件仅用于<b>正当的写作辅助</b>——学习学术改写方法、规范引用、组织自己的语言。请遵守所在学校学术规范与《高等学校预防与处理学术不端行为办法》（教育部令第40号），切勿利用任何工具规避查重、从事抄袭等学术不端行为。
+    </div>
+  </section>
+
+  <!-- ======================= 在线工具 ======================= -->
+  <section id="tab-online" class="tab-panel">
+
+    <div class="card">
+      <div class="card-head"><h2>🌐 在线翻译（中 ↔ 英）</h2><span class="card-sub">免费 API，无需 Key · 单次建议 ≤ 380 字，自动分块</span></div>
+      <div class="adv-row">
+        <label>方向
+          <select id="ot-dir">
+            <option value="zh-en">中文 → English</option>
+            <option value="en-zh">English → 中文</option>
+          </select>
+        </label>
+        <button id="ot-import" class="btn btn-small">从原文导入</button>
+        <button id="ot-btn" class="btn btn-primary btn-small">翻 译</button>
+        <button id="ot-copy" class="btn btn-small">复制结果</button>
+        <span id="ot-status" class="ai-status"></span>
+      </div>
+      <div class="ot-cols">
+        <textarea id="ot-input" rows="5" spellcheck="false" placeholder="输入要翻译的文本…"></textarea>
+        <textarea id="ot-output" rows="5" readonly placeholder="翻译结果将显示在这里…"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>🔁 回译降重（在线）</h2><span class="card-sub">中→英→中，机器翻译自然改变措辞句式，与规则引擎/AI 改写互为补充</span></div>
+      <p class="ai-note">原理：先把文本译成英文、再译回中文，措辞和句式必然变化，是经典降重手法。免费 API 匿名额度约每日 5000 字符，长文建议只对难点段落使用；回译结果可能生硬，请人工润色。</p>
+      <div class="adv-row">
+        <button id="bt-import" class="btn btn-small">从原文导入</button>
+        <button id="bt-run" class="btn btn-primary btn-small">开始回译降重</button>
+        <button id="bt-fill" class="btn btn-small">填入降重结果区</button>
+        <button id="bt-copy" class="btn btn-small">复制</button>
+        <span id="bt-status" class="ai-status"></span>
+      </div>
+      <div class="ot-cols">
+        <textarea id="bt-input" rows="5" spellcheck="false" placeholder="输入要回译的段落（建议 ≤ 800 字）…"></textarea>
+        <textarea id="bt-output" rows="5" readonly placeholder="回译降重结果将显示在这里…"></textarea>
+      </div>
+      <div id="bt-progress-wrap" class="progress-wrap hidden">
+        <div class="progress-bar"><div id="bt-progress-fill" class="progress-fill"></div></div>
+        <span id="bt-progress-text" class="progress-text"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>🔍 在线学术检索</h2><span class="card-sub">选中原文中的词语，一键到学术平台检索</span></div>
+      <div class="adv-row">
+        <input type="text" id="ot-kw" class="seed-input" style="width:280px" placeholder="输入检索关键词，如：网络安全 入侵检测">
+        <button id="ot-kw-sel" class="btn btn-small">使用原文中选中的文本</button>
+        <span class="adv-tip">（在原文框用鼠标选中一段文字后点击）</span>
+      </div>
+      <div class="adv-row">
+        <button class="btn btn-small" data-search="cnki">知网检索</button>
+        <button class="btn btn-small" data-search="wanfang">万方检索</button>
+        <button class="btn btn-small" data-search="cqvip">维普检索</button>
+        <button class="btn btn-small" data-search="baidu">百度学术</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>📶 网络诊断</h2><span class="card-sub">检测各在线服务连通性，排查 AI/翻译不可用问题</span></div>
+      <div class="adv-row">
+        <button id="ot-diag" class="btn btn-primary btn-small">一键检测</button>
+        <span class="adv-tip">通过浏览器直连探测，超时 5 秒判定为不可达</span>
+      </div>
+      <div id="ot-diag-out" class="adv-output"></div>
+    </div>
+  </section>
+
+  <!-- ======================= 知识库 ======================= -->
+  <section id="tab-knowledge" class="tab-panel">
+    <div id="knowledge-root"></div>
+  </section>
+
+  <!-- ======================= 使用说明 ======================= -->
+  <section id="tab-usage" class="tab-panel">
+    <div class="card usage-card">
+      <h2>快速上手</h2>
+      <ol>
+        <li><b>启动：</b>双击 <code>start.bat</code>（自动打开浏览器），或直接双击 <code>index.html</code>（离线功能全部可用）。</li>
+        <li><b>整篇论文：</b>点击“上传论文”，支持 <b>docx / pdf / doc / txt / md / rtf / html</b>。上传后逐段降重，下载时按原格式导出（docx→docx、pdf→pdf…），Word 的标题样式、页边距、图片、表格均保留。老版 .doc 请用 <code>start.bat</code> 启动后上传。</li>
+        <li><b>段落降重：</b>粘贴论文段落 → 选择论文类型与强度 → 点击“开始降重”。公式、参考文献标记、数字、专业术语会自动保护。</li>
+        <li><b>自查：</b>点击“本地查重估算”，查看改写前后相似度变化与疑似重复片段。</li>
+        <li><b>导出：</b>上传的论文点击“下载结果（原格式）”；手动粘贴的内容可复制，或导出为 Word（.doc）/ TXT 文件。</li>
+        <li><b>AI 改写：</b>填入 DeepSeek API Key 后可用（Key 仅存本机浏览器）。没有 Key 也能用全部离线功能。</li>
+      </ol>
+      <h2>降重策略说明</h2>
+      <ul>
+        <li><b>同义词替换：</b>内置 300+ 组学术同义词，按语境随机选取，同一词多次出现时自动换用不同说法。</li>
+        <li><b>句式变换：</b>关联词替换（因为→由于、但是→然而…）、“本文/本研究”等主语变体。</li>
+        <li><b>长句拆分：</b>把含多层递进的超长句拆成短句，符合学术写作规范。</li>
+        <li><b>适度扩写：</b>在关键处增加限定修饰（该模型→上述模型、重要→至关重要），强模式下可选。</li>
+      </ul>
+      <h2>自定义</h2>
+      <ul>
+        <li>同义词：编辑 <code>js/dictionary.js</code> 的 <code>SYNONYM_DICT</code>（通用）与 <code>MATH_SYNONYMS</code>（数学建模专用）。</li>
+        <li>术语保护：编辑 <code>js/dictionary.js</code> 的 <code>MATH_TERMS</code> 与 <code>GENERAL_TERMS</code>。</li>
+        <li>知识库：编辑 <code>js/knowledge.js</code>。</li>
+      </ul>
+      <h2>重要提醒</h2>
+      <p>降重的正确姿势是<b>理解后用自己的话重写</b> + <b>规范引用</b>。机械替换无法替代真正的写作能力，且任何规避学术不端检测的行为都违反《高等学校预防与处理学术不端行为办法》（教育部令第40号）。请务必人工核对 AI 与规则引擎输出的每一处修改，确保语义准确、表述通顺。</p>
+    </div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p>论文降重助手 · 本地离线运行 · 知识库链接均来自官方网站与权威发布渠道（详见知识库页“来源”标注）</p>
+</footer>
+
+<script src="js/dictionary.js"></script>
+<script src="js/zip.js"></script>
+<script src="js/docxio.js"></script>
+<script src="js/pdfio.js"></script>
+<script src="js/fileio.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/refine.js"></script>
+<script src="js/writing.js"></script>
+<script src="js/online.js"></script>
+<script src="js/knowledge.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/checker.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
